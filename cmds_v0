@@ -308,6 +308,19 @@ Active_Bar.FocusLost:Connect(function()
         }
         
         game:GetService("ReplicatedStorage").DefaultChatSystemChatEvents.SayMessageRequest:FireServer(unpack(args))
+    elseif cmdParts[1] == "jobid" then
+        local Server_JobId = game.JobId
+        toClipboard(Server_JobId)
+        Active_Bar.PlaceholderText = "Copied Server Job Id to Clipboard"
+        Active_Bar.Text = ""
+        task.wait(1.5)
+        Active_Bar.PlaceholderText = "type 'cmds' in here to show all commands"
+        local args = {
+            [1] = "ServerId: " .. Server_JobId .. ".",
+            [2] = "All"
+        }
+
+        game:GetService("ReplicatedStorage").DefaultChatSystemChatEvents.SayMessageRequest:FireServer(unpack(args))
     elseif cmdParts[1] == "keepprogress" then
         RespawnCMDs = true
         task.wait(0.001)
