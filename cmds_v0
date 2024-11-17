@@ -1,0 +1,541 @@
+-- Commands Script --
+local HoangHienSG = Instance.new("ScreenGui")
+HoangHienSG.Name = "HoangHien2k3"
+HoangHienSG.Parent = game.CoreGui
+
+-- Màu nhanh chóng [Color]
+local Noir = Color3.fromRGB(0, 0, 0)
+local Blanc = Color3.fromRGB(255, 255, 255)
+local Jaune = Color3.fromRGB(255, 255, 0)
+
+-- Phông chữ [Font]
+local CodeF
+CodeF = Enum.Font.Code
+
+-- Chữ trong hộp thông báo [NotificationGui]
+local Artical = "《Alert》"
+
+-- xác định
+local Players = game:GetService("Players")
+local player = Players.LocalPlayer
+local NotificationGui = game:GetService("StarterGui")
+local HumanoidRootPart_Self = nil
+local spectating_camera = game:GetService("Workspace").CurrentCamera
+local keepBundles = false
+local RespawnCMDs = false
+local keeptptool_state = false
+local alreadyhavespawn = true
+local FloatPart
+local SpawnpointPart
+local character = player.Character or player.CharacterAdded:Wait()
+local BaseHRP = character:WaitForChild("HumanoidRootPart")
+
+-- Xác định 1 [Bundles]
+local customBundles = false
+
+-- Function to update current [HumanoidRootPart/Cột sống nhân vật chắc thế (ko dùng translate)]
+local function updateHumanoid()
+    local character = player.Character or player.CharacterAdded:Wait()
+    local humanoid = character:WaitForChild("Humanoid")
+    local humanoidRootPart = character:WaitForChild("HumanoidRootPart")
+    return humanoid, humanoidRootPart
+end
+-- Chốt 1 [HRP]
+
+local H_H, HRP_H = updateHumanoid()
+
+-- Kích hoạt mỗi khi nhân vật được tải lại
+player.CharacterAdded:Connect(function()
+    H_H, HRP_H = updateHumanoid()
+end)
+-- Hết
+-- Hàm tự động chọn chính xác người chơi [autocorrect players]
+local function Display_Username_AutoCorrect(input)
+    for _, player in ipairs(Players:GetPlayers()) do
+        if string.lower(player.Name):sub(1, #input) == string.lower(input) or
+           string.lower(player.DisplayName):sub(1, #input) == string.lower(input) then
+            return player
+        end
+    end
+    return nil
+end
+-- Hết
+-- Hàm này dùng để copy vào clipboard cắt ra 1 phần từ script của EdgeIY [infinite yield thanks u for not doing obfucators your script]
+function toClipboard(txt)
+    local everyClipboard = setclipboard or toclipboard or set_clipboard or (Clipboard and Clipboard.set)
+
+    if everyClipboard then
+        everyClipboard(tostring(txt))
+        print("Clipboard message")
+    else
+        print("Nothing to do Clipboard")
+    end
+end
+-- Hết
+
+-- Khung hình chứa đựng nút tắt mở [Frame]
+local Commands_Frame = Instance.new("Frame")
+Commands_Frame.Parent = HoangHienSG
+Commands_Frame.BackgroundColor3 = Noir
+Commands_Frame.BackgroundTransparency = 1
+Commands_Frame.Position = UDim2.new(0.5, 0, 0, 0)
+Commands_Frame.Size = UDim2.new(0.05, 0, 0.1, 0)
+Commands_Frame.Active = true
+Commands_Frame.Visible = true
+Commands_Frame.Draggable = true
+
+-- Nút tắt mở hộp nhập lệnh [Cmdbar]
+local Active_Button = Instance.new("TextButton")
+Active_Button.Parent = Commands_Frame
+Active_Button.BackgroundColor3 = Noir
+Active_Button.BackgroundTransparency = 0
+Active_Button.Position = UDim2.new(0.1, 0, 0, 0)
+Active_Button.Size = UDim2.new(0.8, 0, 0.8, 0)
+Active_Button.TextScaled = true
+Active_Button.TextColor3 = Blanc
+Active_Button.Text = "Commands"
+Active_Button.Visible = true
+
+local Active_ButtonUI = Instance.new("UICorner")
+Active_ButtonUI.Parent = Active_Button
+Active_ButtonUI.CornerRadius = UDim.new(0.2, 0)
+
+-- Hộp nhập lệnh [Cho vui]
+local Active_Bar = Instance.new("TextBox")
+Active_Bar.Parent = HoangHienSG
+Active_Bar.BackgroundColor3 = Noir
+Active_Bar.BackgroundTransparency = 0.5
+Active_Bar.Position = UDim2.new(0.3, 0, 0.4, 0)
+Active_Bar.Size = UDim2.new(0.4, 0, 0.05, 0)
+Active_Bar.TextScaled = true
+Active_Bar.TextColor3 = Blanc
+Active_Bar.ClearTextOnFocus = true
+Active_Bar.PlaceholderText = "type 'cmds' in here to show all commands"
+Active_Bar.Text = ""
+Active_Bar.Visible = false
+
+local Active_BarUI = Instance.new("UICorner")
+Active_BarUI.Parent = Active_Bar
+Active_BarUI.CornerRadius = UDim.new(0.2, 0)
+
+local CmdbarBox_Activated = false
+Active_Button.MouseButton1Click:Connect(function()
+    if CmdbarBox_Activated then
+        Active_Button.TextColor3 = Blanc
+        Active_Bar.Visible = false
+        CmdbarBox_Activated = false
+    else
+        Active_Button.TextColor3 = Jaune
+        Active_Bar.Visible = true
+        CmdbarBox_Activated = true
+    end
+end)
+
+-- Kết nối
+Active_Bar.FocusLost:Connect(function()
+    local ActivatedCmds = Active_Bar.Text
+    local cmdParts = ActivatedCmds:split(" ")
+
+    if cmdParts[1] == "reset" then
+        local Head = player.Character.Head
+        H_H.Health = 0
+        Head:Destroy()
+        print("Character Successfully Reset")
+        task.wait(0.001)
+        Active_Bar.PlaceholderText = "Successfully Reset Character"
+        Active_Bar.Text = ""
+        task.wait(1.5)
+        Active_Bar.PlaceholderText = "type 'cmds' in here to show all commands"
+    elseif cmdParts[1] == "speed" and tonumber(cmdParts[2]) then
+        local speedValue = tonumber(cmdParts[2])
+        if H_H then
+            H_H.WalkSpeed = speedValue
+            print("Walk speed set to: " .. speedValue)
+            task.wait(0.001)
+            Active_Bar.PlaceholderText = "Successfully Changed Speed Value"
+            Active_Bar.Text = ""
+            task.wait(1.5)
+            Active_Bar.PlaceholderText = "type 'cmds' in here to show all commands"
+        else
+            print("Humanoid not found.")
+        end
+    elseif cmdParts[1] == "jump" and tonumber(cmdParts[2]) then
+        local jumpValue = tonumber(cmdParts[2])
+        if H_H then
+            H_H.JumpPower = jumpValue
+            print("Jump Power set to: " .. jumpValue)
+            task.wait(0.001)
+            Active_Bar.PlaceholderText = "Successfully Changed Jump Power Value"
+            Active_Bar.Text = ""
+            task.wait(1.5)
+            Active_Bar.PlaceholderText = "type 'cmds' in here to show all commands"
+        else
+            print("Humanoid not found.")
+        end
+    elseif cmdParts[1] == "goto" and cmdParts[2] then
+        local inputName = cmdParts[2]
+        local matchedUser = nil
+        local closeMatch = math.huge
+        
+        for _, otherPlayer in pairs(Players:GetPlayers()) do
+            local displayName = otherPlayer.DisplayName:lower()
+            local username = otherPlayer.Name:lower()
+
+            local matchDisplayName = string.find(displayName, inputName:lower(), 1, true)
+            local matchUsername = string.find(username, inputName:lower(), 1, true)
+
+        if matchDisplayName or matchUsername then
+            local distance = math.abs(#inputName - #displayName) + math.abs(#inputName - #username)
+                if distance < closeMatch then
+                    closeMatch = distance
+                    matchedUser = otherPlayer
+                end
+            end
+        end
+        
+        if matchedUser then
+            HRP_H.CFrame = matchedUser.Character.HumanoidRootPart.CFrame
+            print("Successfully Teleport to: " .. matchedUser.Name)
+            task.wait(0.001)
+            Active_Bar.PlaceholderText = "Successfully Teleport to: " .. matchedUser.Name
+            Active_Bar.Text = ""
+            task.wait(1.5)
+            Active_Bar.PlaceholderText = "type 'cmds' in here to show all commands"
+        else
+            print("Failed Teleport to: " .. matchedUser.Name)
+        end
+    elseif cmdParts[1] == "view" and cmdParts[2] then
+        local spectating_player = cmdParts[2]
+        local target_spectating = Display_Username_AutoCorrect(spectating_player)
+        
+        if target_spectating then
+            local target_spectating_character = target_spectating.Character
+            if target_spectating_character and target_spectating_character:FindFirstChild("HumanoidRootPart") then
+                local target_HumanoidRootPart = target_spectating_character:FindFirstChild("HumanoidRootPart")
+                spectating_camera.CameraSubject = target_HumanoidRootPart
+                spectating_camera.CFrame = target_HumanoidRootPart.CFrame -- optional: for a smoother transition
+                NotificationGui:SetCore("SendNotification", {
+                    Title = Artical,
+                    Text = "◇Now Spectating Player: " .. target_spectating.Name .. "◇",
+                    Duration = 1,
+                })
+                print("Successfully Changed Camera to: " .. target_spectating.Name)
+                task.wait(0.001)
+                Active_Bar.PlaceholderText = "Successfully spectating player: " .. target_spectating.Name
+                Active_Bar.Text = ""
+                task.wait(1.5)
+                Active_Bar.PlaceholderText = "type 'cmds' in here to show all commands"
+            else
+                NotificationGui:SetCore("SendNotification", {
+                    Title = Artical,
+                    Text = "□Not Found or Unknown: Players□",
+                    Duration = 1,
+                })
+                task.wait(0.001)
+                Active_Bar.PlaceholderText = "Failed spectating player: " .. target_spectating.Name
+                Active_Bar.Text = ""
+                task.wait(1.5)
+                Active_Bar.PlaceholderText = "type 'cmds' in here to show all commands"
+            end
+        else
+                NotificationGui:SetCore("SendNotification", {
+                    Title = Artical,
+                    Text = "□Player Not Found□",
+                    Duration = 1,
+                })
+                task.wait(0.001)
+                Active_Bar.PlaceholderText = "Failed spectating player: " .. spectating_player
+                Active_Bar.Text = ""
+                task.wait(1.5)
+                Active_Bar.PlaceholderText = "type 'cmds' in here to show all commands"
+        end
+    elseif cmdParts[1] == "unview" then
+        HumanoidRootPart_Self = game:GetService("Players").LocalPlayer.Character.HumanoidRootPart
+        spectating_camera.CameraSubject = HumanoidRootPart_Self
+        spectating_camera.CFrame = HumanoidRootPart_Self.CFrame
+        NotificationGui:SetCore("SendNotification", {
+            Title = Artical,
+            Text = "♡Now Spectating Your Self♡",
+            Duration = 1,
+        })
+        task.wait(0.001)
+        Active_Bar.PlaceholderText = "Successfully reset spectation"
+        Active_Bar.Text = ""
+        task.wait(1.5)
+        Active_Bar.PlaceholderText = "type 'cmds' in here to show all commands"
+    elseif cmdParts[1] == "serverhop" then
+        local args = {
+            [1] = "۝ " .. player.DisplayName .. ": Server Hop In「1s」.",
+            [2] = "All"
+        }
+        
+        game:GetService("ReplicatedStorage").DefaultChatSystemChatEvents.SayMessageRequest:FireServer(unpack(args))
+        loadstring(game:HttpGet("https://raw.githubusercontent.com/NganHa2k3/Ability/main/ServerHop_Https"))()
+        Active_Bar.PlaceholderText = "Now Server Hopping In..."
+    elseif cmdParts[1] == "rejoin" then
+        local args = {
+            [1] = "۝ " .. player.DisplayName .. ": Rejoining In「1s」.",
+            [2] = "All"
+        }
+        
+        game:GetService("ReplicatedStorage").DefaultChatSystemChatEvents.SayMessageRequest:FireServer(unpack(args))
+        loadstring(game:HttpGet("https://raw.githubusercontent.com/NganHa2k3/RobloxScript/counter/ServerHop"))()
+        Active_Bar.PlaceholderText = "Now Rejoining In..."
+    elseif cmdParts[1] == "tptool" then
+        loadstring(game:HttpGet("https://raw.githubusercontent.com/NganHa2k3/Ability/main/TeleportTool"))()
+        task.wait(0.001)
+        Active_Bar.PlaceholderText = "Successfully Get Teleport Tool"
+        Active_Bar.Text = ""
+        task.wait(1.5)
+        Active_Bar.PlaceholderText = "type 'cmds' in here to show all commands"
+    elseif cmdParts[1] == "copyname" and cmdParts[2] then
+        local PlayersName = cmdParts[2]
+        local C_PlayersName = Display_Username_AutoCorrect(PlayersName)
+        local UserName_C = C_PlayersName.Name
+        local DisplayName_C = C_PlayersName.DisplayName
+        
+        toClipboard(UserName_C)
+        task.wait(0.001)
+        toClipboard(DisplayName_C)
+        task.wait(0.001)
+        Active_Bar.PlaceholderText = "Successfully Copied Players Name"
+        Active_Bar.Text = ""
+        task.wait(1.5)
+        Active_Bar.PlaceholderText = "type 'cmds' in here to show all commands"
+        local args = {
+            [1] = "۝ " .. C_PlayersName.DisplayName .. ": Name Copied In「1s」.",
+            [2] = "All"
+        }
+        
+        game:GetService("ReplicatedStorage").DefaultChatSystemChatEvents.SayMessageRequest:FireServer(unpack(args))
+    elseif cmdParts[1] == "keepprogress" then
+        RespawnCMDs = true
+        task.wait(0.001)
+        Active_Bar.PlaceholderText = "Enable auto use cmds when respawned"
+        Active_Bar.Text = ""
+        task.wait(1.5)
+        Active_Bar.PlaceholderText = "type 'cmds' in here to show all commands"
+    elseif cmdParts[1] == "unkeepprogress" then
+        RespawnCMDs = false
+        task.wait(0.001)
+        Active_Bar.PlaceholderText = "Disable auto use cmds when respawned"
+        Active_Bar.Text = ""
+        task.wait(1.5)
+        Active_Bar.PlaceholderText = "type 'cmds' in here to show all commands"
+    elseif cmdParts[1] == "keep" and cmdParts[2] == "tptool" then
+        keeptptool_state = true
+        task.wait(0.001)
+        Active_Bar.PlaceholderText = "keep tptool when respawned if keepprogress is true"
+        Active_Bar.Text = ""
+        task.wait(1.5)
+        Active_Bar.PlaceholderText = "type 'cmds' in here to show all commands"
+    elseif cmdParts[1] == "unkeep" and cmdParts[2] == "tptool" then
+        keeptptool_state = false
+        task.wait(0.001)
+        Active_Bar.PlaceholderText = "unkeep tptool when respawned"
+        Active_Bar.Text = ""
+        task.wait(1.5)
+        Active_Bar.PlaceholderText = "type 'cmds' in here to show all commands"
+    elseif cmdParts[1] == "keep" and cmdParts[2] == "bundles" then
+        keepBundles = true
+        task.wait(0.001)
+        Active_Bar.PlaceholderText = "keep bundles when respawned"
+        Active_Bar.Text = ""
+        task.wait(1.5)
+        Active_Bar.PlaceholderText = "type 'cmds' in here to show all commands"
+    elseif cmdParts[1] == "unkeep" and cmdParts[2] == "bundles" then
+        keepBundles = false
+        task.wait(0.001)
+        Active_Bar.PlaceholderText = "unkeep bundles when respawned"
+        Active_Bar.Text = ""
+        task.wait(1.5)
+        Active_Bar.PlaceholderText = "type 'cmds' in here to show all commands"
+    elseif cmdParts[1] == "custom" and cmdParts[2] == "bundles" then
+        customBundles = true
+        task.wait(0.001)
+        Active_Bar.PlaceholderText = "Successfully use custom bundles"
+        Active_Bar.Text = ""
+        task.wait(1.5)
+        Active_Bar.PlaceholderText = "type 'cmds' in here to show all commands"
+    elseif cmdParts[1] == "locked" and cmdParts[2] == "button" then
+        Commands_Frame.Draggable = false
+        task.wait(0.001)
+        Active_Bar.PlaceholderText = "Locked Position On Hide/Shown CmdBar Button"
+        Active_Bar.Text = ""
+        task.wait(1.5)
+        Active_Bar.PlaceholderText = "type 'cmds' in here to show all commands"
+    elseif cmdParts[1] == "unlocked" and cmdParts[2] == "button" then
+        Commands_Frame.Draggable = true
+        task.wait(0.001)
+        Active_Bar.PlaceholderText = "Unlocked Position On Hide/Shown CmdBar Button"
+        Active_Bar.Text = ""
+        task.wait(1.5)
+        Active_Bar.PlaceholderText = "type 'cmds' in here to show all commands"
+    elseif cmdParts[1] == "commands" and cmdParts[2] == "font" and cmdParts[3] == "arcade" then
+        CodeF = Enum.Font.Arcade
+        Active_Button.Font = CodeF
+        Active_Bar.Font = CodeF
+        task.wait(0.001)
+        Active_Bar.PlaceholderText = "Text Font Set To Arcade"
+        Active_Bar.Text = ""
+        task.wait(1.5)
+        Active_Bar.PlaceholderText = "type 'cmds' in here to show all commands"
+    elseif cmdParts[1] == "commands" and cmdParts[2] == "font" and cmdParts[3] == "default" then
+        CodeF = Enum.Font.Code
+        Active_Button.Font = CodeF
+        Active_Bar.Font = CodeF
+        task.wait(0.001)
+        Active_Bar.PlaceholderText = "Text Font Set To Default"
+        Active_Bar.Text = ""
+        task.wait(1.5)
+        Active_Bar.PlaceholderText = "type 'cmds' in here to show all commands"
+    elseif cmdParts[1] == "EdgeIY" then
+        loadstring(game:HttpGet("https://raw.githubusercontent.com/EdgeIY/infiniteyield/master/source"))()
+        task.wait(0.001)
+        Active_Bar.PlaceholderText = "Loading Infinite Yield Script..."
+        Active_Bar.Text = ""
+        task.wait(1.5)
+        Active_Bar.PlaceholderText = "type 'cmds' in here to show all commands"
+    elseif cmdParts[1] == "saferground" then
+        FloatPart = Instance.new("Part")
+        FloatPart.Size = Vector3.new(20, 0.2, 20)
+        FloatPart.Position = Vector3.new(
+            player.Character.HumanoidRootPart.Position.X,
+            player.Character.HumanoidRootPart.Position.Y - 3.5,
+            player.Character.HumanoidRootPart.Position.Z
+        )
+        FloatPart.Anchored = true
+        FloatPart.Transparency = 1
+        FloatPart.Parent = workspace
+        
+        local lockedY = FloatPart.Position.Y
+
+        local function updatePartPosition()
+            if player.Character and player.Character:FindFirstChild("HumanoidRootPart") then
+                FloatPart.Position = Vector3.new(
+                    player.Character.HumanoidRootPart.Position.X,
+                    lockedY,
+                    player.Character.HumanoidRootPart.Position.Z
+                )
+            end
+        end
+
+        local updateConnection
+        updateConnection = game:GetService("RunService").Heartbeat:Connect(function()
+            updatePartPosition()
+        end)
+        task.wait(0.001)
+        Active_Bar.PlaceholderText = "No fall to void if on ground = no ground idk"
+        Active_Bar.Text = ""
+        task.wait(1.5)
+        Active_Bar.PlaceholderText = "type 'cmds' in here to show all commands"
+    elseif cmdParts[1] == "unsaferground" then
+        if FloatPart then
+            FloatPart:Destroy()
+            FloatPart = nil
+            task.wait(0.001)
+            Active_Bar.PlaceholderText = "Now u can fall to void if on ground = no ground"
+            Active_Bar.Text = ""
+            task.wait(1.5)
+            Active_Bar.PlaceholderText = "type 'cmds' in here to show all commands"
+        else
+            task.wait(0.001)
+            Active_Bar.PlaceholderText = "Can't do that"
+            Active_Bar.Text = ""
+            task.wait(1.5)
+            Active_Bar.PlaceholderText = "type 'cmds' in here to show all commands"
+        end
+    elseif cmdParts[1] == "spawnpoint" then
+        HumanoidRootPart_Self = game:GetService("Players").LocalPlayer.Character.HumanoidRootPart
+        if alreadyhavespawn then
+        SpawnpointPart = Instance.new("Part")
+        SpawnpointPart.Size = Vector3.new(0.1, 0.1, 0.1)
+        SpawnpointPart.Position = HumanoidRootPart_Self.Position + Vector3.new(0, 1, 0)
+        SpawnpointPart.Anchored = true
+        SpawnpointPart.Color = Color3.new(1, 0, 1)
+        SpawnpointPart.Transparency = 0
+        SpawnpointPart.CanCollide = false
+        SpawnpointPart.Name = "Custom_S"
+        SpawnpointPart.Parent = workspace
+        customSpawnpoint = true
+        alreadyhavespawn = false
+        task.wait(0.001)
+        Active_Bar.PlaceholderText = "Custom Spawnpoint Set"
+        Active_Bar.Text = ""
+        task.wait(1.5)
+        Active_Bar.PlaceholderText = "type 'cmds' in here to show all commands"
+        end
+    elseif cmdParts[1] == "refresh" and cmdParts[2] == "spawnpoint" then
+        if SpawnpointPart then
+            SpawnpointPart:Destroy()
+            SpawnpointPart = nil
+            customSpawnpoint = false
+            alreadyhavespawn = true
+            task.wait(0.001)
+            Active_Bar.PlaceholderText = "Custom Spawnpoint Remove"
+            Active_Bar.Text = ""
+            task.wait(1.5)
+            Active_Bar.PlaceholderText = "type 'cmds' in here to show all commands"
+        end
+    elseif cmdParts[1] == "remotespy" or cmdParts[1] == "rspy" then
+        loadstring(game:HttpGet("https://rawscripts.net/raw/a-literal-baseplate.-Remote-Spy-For-Mobile-18133"))()
+        task.wait(0.001)
+        Active_Bar.PlaceholderText = "Loaded In a Remote Spy for mobile not making by me"
+        Active_Bar.Text = ""
+        task.wait(1.5)
+        Active_Bar.PlaceholderText = "type 'cmds' in here to show all commands"
+    elseif cmdParts[1] == "dex" or cmdParts[1] == "explorer" then
+        loadstring(game:HttpGet("https://rawscripts.net/raw/Universal-Script-Keyless-mobile-dex-17888"))()
+        task.wait(0.001)
+        Active_Bar.PlaceholderText = "Loaded In a Dex Explorer for mobile not making by me"
+        Active_Bar.Text = ""
+        task.wait(1.5)
+        Active_Bar.PlaceholderText = "type 'cmds' in here to show all commands"
+    elseif cmdParts[1] == "partdetector" or cmdParts[1] == "partname" then
+        loadstring(game:HttpGet('https://raw.githubusercontent.com/GhostPlayer352/Test4/main/Part%20Name%20Detector'))()
+        task.wait(0.001)
+        Active_Bar.PlaceholderText = "Loaded In a Part Detector not making by me"
+        Active_Bar.Text = ""
+        task.wait(1.5)
+        Active_Bar.PlaceholderText = "type 'cmds' in here to show all commands"
+    else
+        Active_Bar.Text = ""
+        Active_Bar.PlaceholderText = "Unknown Commands, Try Again !"
+        task.wait(1.5)
+        Active_Bar.PlaceholderText = "type 'cmds' in here to show all commands"
+    end
+end)
+
+local function BundlesInUse()
+    if customBundles then
+        loadstring(game:HttpGet("https://raw.githubusercontent.com/NganHa2k3/RobloxScript/item/AnimE"))()
+    end
+    -- ☆
+end
+
+-- Khi nhân vật được tải lại kích hoạt sự kiện [Events]
+player.CharacterAdded:Connect(function()
+    if RespawnCMDs then
+        print("On Respawn Events: Is Enable [set true]")
+        if keeptptool_state then
+            loadstring(game:HttpGet("https://raw.githubusercontent.com/NganHa2k3/Ability/main/TeleportTool"))()
+        end
+        -- ☆
+        if keepBundles then
+            BundlesInUse()
+        end
+        -- ☆
+        if customSpawnpoint then
+            BaseHRP = game.Players.LocalPlayer.Character.HumanoidRootPart
+            local ToCustomSpawn = game:GetService("Workspace"):FindFirstChild("Custom_S")
+            if ToCustomSpawn then
+                BaseHRP.CFrame = ToCustomSpawn.CFrame
+            end
+        end
+    else
+        print("On Respawn Events: Is Disable [set false]")
+    end
+end)
+
+Active_Button.Font = CodeF
+Active_Bar.Font = CodeF
